@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/Logo-de-SENA-png-verde.png') }}" type="image/png">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <main class="container">
+        <div class="text">Lista de Votos</div>
+        {% if votos %}
+        <div class="tabla-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Documento</th>
+                        <th>Nombre</th>
+                        <th>Ficha</th>
+                        <th>Jornada</th>
+                        <th>Candidato</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-votos"> 
+                    {% for voto in votos %}
+                    <tr>
+                        <td>{{ voto.documento }}</td>
+                        <td>{{ voto.votante }}</td>
+                        <td>{{ voto.ficha or 'Sin ficha' }}</td>
+                        <td>{{ voto.jornada }}</td>
+                        <td>{{ voto.nombre_candidato }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>No se han registrado votos aún.</p>
+        {% endif %}
+    
+        <div class="btn-container">
+            <a href="{{ url_for('home') }}" class="btn btn-back">Volver al Inicio</a>
+            <a href="{{ url_for('exportar_excel') }}" class="btn btn-export">Descargar Lista</a>
+            <a href="{{ url_for('upload') }}" class="btn btn-export">Cargar Ficha</a>
+            <a href="{{ url_for('crear_candidato') }}" class="btn btn-export">Añadir Candidato</a>
+        </div>
+    </main>    
+
+    <script>
+        function actualizarVotos() {
+            $.ajax({
+                url: "/admin/votos",
+                type: "GET",
+                success: function (data) {
+                    $("#tabla-votos").html(data); // Reemplaza solo el contenido de la tabla
+                }
+            });
+        }
+    
+        setInterval(actualizarVotos, 500); // Recarga los votos cada 5 segundos
+    </script>    
+</body>
+
+</html>
