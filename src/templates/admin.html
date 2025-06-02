@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración</title>
-    <link rel="icon" href="{{ url_for('static', filename='img/Logo-de-SENA-png-verde.png') }}" type="image/png">
+    <link rel="icon" href="{{ url_for('static', filename='img/senavotos_logo.png') }}" type="image/png">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -13,8 +13,33 @@
 <body>
     <main class="container">
         <div class="text">Lista de Votos</div>
+
+        <div class="contador-votos">
+            Votos Registrados: <span id="total-votos">0</span>
+        </div>
+
         {% if votos %}
         <div class="tabla-scroll">
+
+            <div class="filtros">
+                <label for="filtro-jornada">Filtrar Jornada:</label>
+                <select id="filtro-jornada">
+                    <option value="">Todas</option>
+                    <option value="mañana">Mañana</option>
+                    <option value="tarde">Tarde</option>
+                    <option value="mixta">Mixta</option>
+                    <option value="virtual">Virtual</option>
+                </select>
+
+                <label for="filtro-candidato">Filtrar Candidato:</label>
+                <select id="filtro-candidato">
+                    <option value="">Todos</option>
+                    {% for voto in votos|unique(attribute='nombre_candidato') %}
+                    <option value="{{ voto.nombre_candidato }}">{{ voto.nombre_candidato }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <table>
                 <thead>
                     <tr>
@@ -25,7 +50,7 @@
                         <th>Candidato</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-votos"> 
+                <tbody id="tabla-votos">
                     {% for voto in votos %}
                     <tr>
                         <td>{{ voto.documento }}</td>
@@ -41,28 +66,21 @@
         {% else %}
         <p>No se han registrado votos aún.</p>
         {% endif %}
-    
+
         <div class="btn-container">
             <a href="{{ url_for('home') }}" class="btn btn-back">Volver al Inicio</a>
-            <a href="{{ url_for('exportar_excel') }}" class="btn btn-export">Descargar Lista</a>
+            <form id="form-exportar" method="POST" action="{{ url_for('exportar_excel') }}">
+                <input type="hidden" name="jornada" id="filtro-jornada-hidden">
+                <input type="hidden" name="candidato" id="filtro-candidato-hidden">
+                <button type="submit" class="btn btn-export">Descargar Lista</button>
+            </form>
             <a href="{{ url_for('upload') }}" class="btn btn-export">Cargar Ficha</a>
             <a href="{{ url_for('crear_candidato') }}" class="btn btn-export">Añadir Candidato</a>
         </div>
-    </main>    
+    </main>
 
-    <script>
-        function actualizarVotos() {
-            $.ajax({
-                url: "/admin/votos",
-                type: "GET",
-                success: function (data) {
-                    $("#tabla-votos").html(data); // Reemplaza solo el contenido de la tabla
-                }
-            });
-        }
-    
-        setInterval(actualizarVotos, 500); // Recarga los votos cada 5 segundos
-    </script>    
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+
 </body>
 
 </html>

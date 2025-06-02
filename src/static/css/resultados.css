@@ -32,7 +32,7 @@ body a {
     background-color: green;
     transition: 0.3s;
     border-radius: 8px;
-    transition: 0.3s;
+    transition: all 0.3s;
     /* margin: 1%; */
 }
 

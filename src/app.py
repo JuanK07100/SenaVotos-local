@@ -98,21 +98,32 @@ def home():
                         'idusuario': usuario['idusuario']
                     }
 
-                    # Redireccionar según el rol
-                    if usuario['rol'] == 1:  # Votante
-                        return redirect(url_for('eleccion'))
-                    elif usuario['rol'] == 2:  # Admin
-                        return redirect(url_for('admin'))
-                    elif usuario['rol'] == 3:  # Recepcionista
-                        return redirect(url_for('recepcionista'))
-                    elif usuario['rol'] == 4:  # Contador
-                        return redirect(url_for('resultados'))
+                    # Redireccionar según el rol con pantalla de carga
+                    if usuario['rol'] == 1:
+                        destino = 'eleccion'
+                    elif usuario['rol'] == 2:
+                        destino = 'admin'
+                    elif usuario['rol'] == 3:
+                        destino = 'recepcionista'
+                    elif usuario['rol'] == 4:
+                        destino = 'resultados'
+                    else:
+                        destino = 'eleccion'
+
+                    return redirect(url_for('carga', destino=destino))
+
             else:
                 mensaje = "La clave ingresada es incorrecta. Por favor, inténtelo de nuevo."
         else:
             mensaje = "El número de documento ingresado no está registrado. Por favor, inténtelo de nuevo."
 
     return render_template('index.html', mensaje=mensaje)
+
+@app.route('/carga')
+@no_cache
+def carga():
+    destino = request.args.get('destino', 'eleccion')
+    return render_template('carga.html', destino=destino)
 
 @app.route('/eleccion', methods=['GET', 'POST'])
 @no_cache
@@ -226,7 +237,10 @@ def actualizar_votos():
     except MySQLdb.Error:
         votos = []
 
-    return render_template_string("""
+    jornadas = sorted(set(v['jornada'] for v in votos))
+    candidatos = sorted(set(v['nombre_candidato'] for v in votos))
+
+    html_filas = render_template_string("""
         {% for voto in votos %}
         <tr>
             <td>{{ voto.documento }}</td>
@@ -238,27 +252,46 @@ def actualizar_votos():
         {% endfor %}
     """, votos=votos)
 
-@app.route('/admin/exportar_excel')
+    return jsonify({
+        "html": html_filas,
+        "jornadas": jornadas,
+        "candidatos": candidatos,
+        "total": len(votos)  # 🧮 Total de votos
+    })
+
+@app.route('/admin/exportar_excel', methods=['POST'])
 def exportar_excel():
+    jornada_filtro = request.form.get('jornada')
+    candidato_filtro = request.form.get('candidato')
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    try:
-        cursor.execute(""" 
-            SELECT 
-                u.documento, 
-                u.nombre AS votante, 
-                c.nombre_candidato, 
-                u.jornada, 
-                COALESCE(f.idfichas, 'Sin ficha') AS ficha
-            FROM votos v
-            JOIN usuarios u ON v.usuarios_idusuario = u.idusuario
-            JOIN candidatos c ON v.candidatos_idcandidato = c.idcandidato
-            LEFT JOIN fichas f ON u.fichas_idfichas = f.idfichas
-        """)
-        votos = cursor.fetchall()
-    except MySQLdb.Error:
-        votos = []
-    
+
+    sql = """ 
+        SELECT 
+            u.documento, 
+            u.nombre AS votante, 
+            c.nombre_candidato, 
+            u.jornada, 
+            COALESCE(f.idfichas, 'Sin ficha') AS ficha
+        FROM votos v
+        JOIN usuarios u ON v.usuarios_idusuario = u.idusuario
+        JOIN candidatos c ON v.candidatos_idcandidato = c.idcandidato
+        LEFT JOIN fichas f ON u.fichas_idfichas = f.idfichas
+        WHERE 1=1
+    """
+    filtros = []
+
+    if jornada_filtro:
+        sql += " AND u.jornada = %s"
+        filtros.append(jornada_filtro)
+
+    if candidato_filtro:
+        sql += " AND c.nombre_candidato = %s"
+        filtros.append(candidato_filtro)
+
+    cursor.execute(sql, tuple(filtros))
+    votos = cursor.fetchall()
+
     wb = Workbook()
 
     # 🔹 Hoja "Votos" (Manteniendo Estilos)

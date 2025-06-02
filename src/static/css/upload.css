@@ -61,7 +61,7 @@ body {
     cursor: pointer;
     padding: 0.8rem 1.5rem;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
     margin: 0.5rem 0;
 }
 

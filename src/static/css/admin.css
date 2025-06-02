@@ -18,6 +18,46 @@ body {
     background-size: cover;
 }
 
+.filtros {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filtros label {
+    font-weight: bold;
+    color: green;
+}
+
+.filtros select {
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.contador-votos {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    margin: 1%;
+    font-weight: bold;
+    font-size: 18px;
+    color: #008000;
+}
+
+.contador-votos span {
+    color: green;
+    margin-left: 1%;
+    padding: 10px 20px;
+    background-color: rgba(0, 128, 0, 0.152);
+    border: 1px solid green;
+    border-radius: 50px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
 .tabla-scroll {
     max-height: 400px;
     overflow-y: auto;
@@ -151,6 +191,7 @@ h1 {
 
 .btn-back {
     background-color: #a90000;
+    transition: all 0.3s;
 }
 
 .btn-back:hover {
@@ -159,6 +200,7 @@ h1 {
 
 .btn-export {
     background-color: #28a745;
+    transition: all 0.3s;
 }
 
 .btn-export:hover {

@@ -50,6 +50,7 @@ a {
     text-decoration: none;
     color: #007bff; /* Azul para enlaces */
     font-weight: bold;
+    transition: all 0.3s;
 }
 
 a:hover {
