@@ -13,7 +13,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-image: url(../img/FondoSena2.jpg);
+    background-image: url(../img/FondoSena3.png);
     background-repeat: no-repeat;
     background-size: cover;
 }
@@ -127,6 +127,7 @@ td {
     padding: 12px;
     text-align: left;
     border-bottom: 1px solid #ddd;
+    text-align: center;
 }
 
 th {
@@ -139,7 +140,7 @@ tr:nth-child(even) {
 }
 
 tr:hover {
-    background-color: rgba(0, 128, 0, 0.362);
+    background-color: rgba(124, 255, 124, 0.362);
     /* color: white; */
 }
 

@@ -7,21 +7,19 @@
     <title>Crear Nuevo Candidato</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/crear_candidato.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='img/senavotos_logo.png') }}" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
     <div class="container">
         <h1>Añadir Candidato</h1>
-        <form action="{{ url_for('crear_candidato') }}" method="POST" enctype="multipart/form-data" onsubmit="mostrarModal(event)">
-            <!-- Campo para el nombre -->
+        <form action="{{ url_for('crear_candidato') }}" method="POST" enctype="multipart/form-data" onsubmit="mostrarNotificacion(event)">
             <label for="nombre_candidato">Nombre del Candidato:</label>
             <input type="text" id="nombre_candidato" name="nombre_candidato" required>
 
-            <!-- Campo para la foto -->
             <label for="foto_candidato">Foto del Candidato:</label>
             <input type="file" id="foto_candidato" name="foto_candidato" accept="image/*" required>
 
-            <!-- Campo para la jornada -->
             <label for="jornada">Jornada:</label>
             <select id="jornada" name="jornada">
                 <option value="mañana">Mañana</option>
@@ -30,36 +28,26 @@
                 <option value="virtual">Virtual</option>
             </select>
 
-            <!-- Botón para enviar -->
             <button type="submit">Crear</button>
         </form>
-        <!-- Enlace para volver al panel -->
         <a href="/admin">Volver al Panel</a>
     </div>
 
-    <!-- Modal de confirmación -->
-    <div class="overlay" id="overlay"></div>
-    <div class="modal" id="modal">
-        <p>Candidato Añadido Correctamente</p>
-    </div>
-
     <script>
-        function mostrarModal(event) {
-            event.preventDefault(); // Evita el envío inmediato del formulario
+        function mostrarNotificacion(event) {
+            event.preventDefault(); // Evita envío inmediato
 
-            const overlay = document.getElementById('overlay');
-            const modal = document.getElementById('modal');
+            Swal.fire({
+                title: '¡Candidato añadido!',
+                text: 'Se ha registrado correctamente.',
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
 
-            // Mostrar el modal y la superposición
-            overlay.classList.add('show');
-            modal.classList.add('show');
-
-            // Ocultar el modal después de 2 segundos
+            // Esperar 2s y enviar el formulario
             setTimeout(() => {
-                overlay.classList.remove('show');
-                modal.classList.remove('show');
-
-                // Enviar el formulario después de cerrar el modal
                 event.target.submit();
             }, 2000);
         }

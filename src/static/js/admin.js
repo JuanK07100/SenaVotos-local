@@ -37,7 +37,7 @@ function actualizarVotos() {
     });
 }
 
-setInterval(actualizarVotos, 500); // Recarga los votos cada 5 segundos
+setInterval(actualizarVotos, 1000); // Recarga los votos cada 5 segundos
 
 function aplicarFiltros() {
     const jornadaSeleccionada = $('#filtro-jornada').val().toLowerCase();

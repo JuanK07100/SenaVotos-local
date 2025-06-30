@@ -12,6 +12,7 @@ from openpyxl import Workbook, load_workbook
 import pandas as pd
 import io
 from datetime import datetime
+import pymysql
 from werkzeug.utils import secure_filename
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.chart import BarChart, Reference, Series
@@ -21,7 +22,8 @@ from openpyxl.chart.legend import Legend
 import bcrypt
 from datetime import datetime
 import pytz
-import bcrypt  
+import bcrypt
+import hashlib  
 
 app = Flask(__name__)
 app.secret_key = 'd4i8e2g1o7n#'
@@ -427,7 +429,7 @@ def upload():
 @no_cache
 def procesar_fichas():
     file = request.files.get('file')
-    jornada = request.form.get('jornada')  # Capturar la jornada seleccionada
+    jornada = request.form.get('jornada')
 
     if not jornada or jornada not in ['mañana', 'tarde', 'mixta', 'virtual']:
         flash('Por favor, selecciona una jornada válida.', 'danger')
@@ -438,10 +440,8 @@ def procesar_fichas():
         return redirect(url_for('upload'))
 
     try:
-        # Leer el archivo Excel
         df = pd.read_excel(file, sheet_name=0, header=None)
 
-        # Procesar la ficha
         ficha_combined = df.iloc[1, 2]
         if pd.isna(ficha_combined) or ficha_combined.strip() == '':
             raise ValueError("El campo 'Ficha de Caracterización' está vacío.")
@@ -452,43 +452,54 @@ def procesar_fichas():
             id_ficha = id_ficha.strip()
             nombre_programa = nombre_programa.strip()
         else:
-            raise ValueError("El formato de la ficha no es válido. Se esperaba un ID seguido de un nombre de programa.")
+            raise ValueError("Formato inválido: se esperaba 'ID - Nombre del programa'.")
 
-        # Generar una clave aleatoria para la ficha
         clave_original = f"{id_ficha[:3]}-{nombre_programa[:3]}".upper()
-        clave_hash = bcrypt.hashpw(clave_original.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        clave_hash = hashlib.sha256(clave_original.encode('utf-8')).hexdigest()
 
-        # Insertar la ficha en la base de datos con la clave hasheada
-        with mysql.connection.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO fichas (idfichas, nombre_programa, clave) VALUES (%s, %s, %s)",
-                (id_ficha, nombre_programa, clave_hash)
-            )
-        mysql.connection.commit()
+        # Intentar insertar la ficha
+        try:
+            with mysql.connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO fichas (idfichas, nombre_programa, clave) VALUES (%s, %s, %s)",
+                    (id_ficha, nombre_programa, clave_hash)
+                )
+            mysql.connection.commit()
+        except pymysql.err.IntegrityError as e:
+            if e.args[0] == 1062:
+                flash(f"⚠️ La ficha con ID {id_ficha} ya existe en el sistema.", "danger")
+                return redirect(url_for('upload'))
+            else:
+                raise
 
-        # Procesar los aprendices
-        for index, row in df.iloc[5:33, 1:4].iterrows():  # Filas 6-33, columnas B-D
+        # Procesar aprendices (desde fila 6, columnas B-F)
+        for row in df.iloc[5:33].itertuples(index=False):
             documento = row[1]
             nombre = row[2]
             apellidos = row[3]
+            celular = str(row[4]).strip() if len(row) > 4 and not pd.isna(row[4]) else None
+            correo = str(row[5]).strip() if len(row) > 5 and not pd.isna(row[5]) else None
 
             if pd.isna(documento) or pd.isna(nombre) or pd.isna(apellidos):
                 continue
 
             nombre_completo = f"{nombre.strip()} {apellidos.strip()}"
-            
-            # Insertar cada aprendiz en la tabla 'usuarios' con la jornada
+
             with mysql.connection.cursor() as cursor:
                 cursor.execute(
-                    "INSERT INTO usuarios (documento, nombre, fichas_idfichas, jornada) VALUES (%s, %s, %s, %s)",
-                    (documento, nombre_completo, id_ficha, jornada)
+                    """
+                    INSERT INTO usuarios (documento, nombre, celular, correo, fichas_idfichas, jornada)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (documento, nombre_completo, celular, correo, id_ficha, jornada)
                 )
         mysql.connection.commit()
 
-        flash("Datos de la ficha y los aprendices guardados correctamente.", "success")
+        flash("✅ Datos de la ficha y aprendices guardados correctamente.", "success")
 
     except Exception as e:
-        flash(f"Error al procesar el archivo: {str(e)}", "danger")
+        flash("❌ Error al procesar el archivo. Verifica que el formato sea correcto.", "danger")
+        print("[ERROR]", str(e))  # Para ti como desarrollador
 
     return redirect(url_for('upload'))
 
