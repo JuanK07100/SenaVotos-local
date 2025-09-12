@@ -2,7 +2,7 @@ from multiprocessing import connection
 import os
 import random
 from django import db
-from flask import Flask, jsonify, redirect, render_template, render_template_string, request, session, url_for, flash, make_response, send_file
+from flask import Flask, Response, jsonify, redirect, render_template, render_template_string, request, session, url_for, flash, make_response, send_file
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 from functools import wraps
@@ -74,9 +74,9 @@ def home():
 
     if request.method == 'POST':
         documento = request.form.get('documento')
-        clave = request.form.get('clave')
+        # clave = request.form.get('clave')  # <<< CONTRASEÑA DESHABILITADA PARA PRUEBAS
 
-        # Buscar usuario en la base de datos
+        # Buscar usuario en la base de datos (ya no usamos la clave para autenticación)
         cursor.execute("""
             SELECT u.idusuario, u.documento, u.nombre, u.rol, u.jornada, u.asistencia_voto, f.clave
             FROM usuarios u 
@@ -86,40 +86,46 @@ def home():
         usuario = cursor.fetchone()
 
         if usuario:
-            if usuario['clave'] == clave:
-                # Validar si debe pasar por recepción
-                if usuario['rol'] not in [2, 3, 4] and usuario['jornada'] != 'virtual' and usuario['asistencia_voto'] == 0:
-                    mensaje = "Debes pasar por recepción antes de continuar a la votación."
-                else:
-                    session.permanent = True
-                    session['usuario'] = {
-                        'documento': usuario['documento'],
-                        'nombre': usuario['nombre'],
-                        'rol': usuario['rol'],
-                        'jornada': usuario['jornada'],
-                        'idusuario': usuario['idusuario']
-                    }
+            # --- Bloque de contraseña comentado para pruebas ---
+            # if usuario['clave'] == clave:
+            #     ...
+            # else:
+            #     mensaje = "La clave ingresada es incorrecta. Por favor, inténtelo de nuevo."
+            # ----------------------------------------------------
 
-                    # Redireccionar según el rol con pantalla de carga
-                    if usuario['rol'] == 1:
-                        destino = 'eleccion'
-                    elif usuario['rol'] == 2:
-                        destino = 'admin'
-                    elif usuario['rol'] == 3:
-                        destino = 'recepcionista'
-                    elif usuario['rol'] == 4:
-                        destino = 'resultados'
-                    else:
-                        destino = 'eleccion'
-
-                    return redirect(url_for('carga', destino=destino))
-
+            # En vez de verificar clave, iniciamos sesión directamente si el documento existe
+            # Validar si debe pasar por recepción
+            if usuario['rol'] not in [2, 3, 4] and usuario['jornada'] != 'virtual' and usuario['asistencia_voto'] == 0:
+                mensaje = "Debes pasar por recepción antes de continuar a la votación."
             else:
-                mensaje = "La clave ingresada es incorrecta. Por favor, inténtelo de nuevo."
+                session.permanent = True
+                session['usuario'] = {
+                    'documento': usuario['documento'],
+                    'nombre': usuario['nombre'],
+                    'rol': usuario['rol'],
+                    'jornada': usuario['jornada'],
+                    'idusuario': usuario['idusuario']
+                }
+
+                # Redireccionar según el rol con pantalla de carga
+                if usuario['rol'] == 1:
+                    destino = 'eleccion'
+                elif usuario['rol'] == 2:
+                    destino = 'admin'
+                elif usuario['rol'] == 3:
+                    destino = 'recepcionista'
+                elif usuario['rol'] == 4:
+                    destino = 'resultados'
+                else:
+                    destino = 'eleccion'
+
+                return redirect(url_for('carga', destino=destino))
+
         else:
             mensaje = "El número de documento ingresado no está registrado. Por favor, inténtelo de nuevo."
 
     return render_template('index.html', mensaje=mensaje)
+
 
 @app.route('/carga')
 @no_cache
@@ -271,10 +277,10 @@ def exportar_excel():
     sql = """ 
         SELECT 
             u.documento, 
-            u.nombre AS votante, 
-            c.nombre_candidato, 
+            u.nombre AS votante,  
             u.jornada, 
-            COALESCE(f.idfichas, 'Sin ficha') AS ficha
+            COALESCE(f.idfichas, 'Sin ficha') AS ficha,
+            c.nombre_candidato
         FROM votos v
         JOIN usuarios u ON v.usuarios_idusuario = u.idusuario
         JOIN candidatos c ON v.candidatos_idcandidato = c.idcandidato
@@ -296,12 +302,11 @@ def exportar_excel():
 
     wb = Workbook()
 
-    # Hoja "Votos" (Manteniendo Estilos)
+    # -------------------- Hoja Votos --------------------
     ws = wb.active
     ws.title = "Votos"
 
-    # Aplicar estilos originales
-    encabezados = ["Documento del Votante", "Nombre del Votante", "Ficha", "Jornada", "Votó"]
+    encabezados = ["Documento del Votante", "Nombre del Votante", "Ficha", "Jornada"]
     header_fill = PatternFill(start_color="008000", end_color="008000", fill_type="solid")
     header_font = Font(bold=True, color="FFFFFF")
     header_align = Alignment(horizontal="center", vertical="center")
@@ -309,7 +314,6 @@ def exportar_excel():
                          top=Side(style="thin"), bottom=Side(style="thin"))
 
     ws.append(encabezados)
-
     for col_num, header in enumerate(encabezados, start=1):
         cell = ws.cell(row=1, column=col_num)
         cell.fill = header_fill
@@ -318,101 +322,104 @@ def exportar_excel():
         cell.border = thin_border
 
     for voto in votos:
-        ws.append([voto['documento'], voto['votante'], voto['ficha'], voto['jornada'], voto['nombre_candidato']])
+        ws.append([voto['documento'], voto['votante'], voto['ficha'], voto['jornada']])
 
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=5):
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=4):
         for cell in row:
             cell.border = thin_border
 
     for col in range(1, 6):
         ws.column_dimensions[get_column_letter(col)].width = 20
 
-    # Hoja "Resumen" con Mejoras
+    # -------------------- Hoja Resumen --------------------
     ws2 = wb.create_sheet("Resumen")
 
-    encabezado_fill = PatternFill(start_color="008000", end_color="008000", fill_type="solid")
-    encabezado_font = Font(bold=True, color="FFFFFF")
-    encabezado_align = Alignment(horizontal="center", vertical="center")
-
+    # ==== Tabla 1: Votos por Jornada ====
     ws2.append(["Jornada", "Total Votos"])
     for col in range(1, 3):
         cell = ws2.cell(row=1, column=col)
-        cell.fill = encabezado_fill
-        cell.font = encabezado_font
-        cell.alignment = encabezado_align
+        cell.fill = PatternFill(start_color="008000", end_color="008000", fill_type="solid")
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
         cell.border = thin_border
 
-    # Contar votos por jornada
-    jornadas = {"mañana": 0, "tarde": 0, "virtual": 0, "mixta": 0}
-    ganadores = {}
+    colores_jornadas = {
+        "mañana": "FFD700",   # Dorado
+        "tarde": "87CEEB",    # Azul cielo
+        "virtual": "90EE90",  # Verde claro
+        "mixta": "FFB6C1"     # Rosado
+    }
 
+    jornadas = {"mañana": 0, "tarde": 0, "virtual": 0, "mixta": 0}
     for voto in votos:
         jornadas[voto['jornada']] += 1
-        ganadores[voto['jornada']] = voto['nombre_candidato']
 
-    # Llenar tabla de votos por jornada
     row = 2
     for jornada, total in jornadas.items():
-        ws2.append([jornada, total])
-        ws2.cell(row=row, column=1).border = thin_border
-        ws2.cell(row=row, column=2).border = thin_border
+        nombre_capitalizado = jornada.capitalize()
+        ws2.append([nombre_capitalizado, total])
+        for col in range(1, 3):
+            cell = ws2.cell(row=row, column=col)
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            if col == 1:
+                cell.fill = PatternFill(start_color=colores_jornadas[jornada], 
+                                        end_color=colores_jornadas[jornada], 
+                                        fill_type="solid")
         row += 1
 
-    # Espaciado y segunda tabla con ganadores
+    # ==== Tabla 2: Votos por Candidato ====
     ws2.append([])
-    ws2.append(["Jornada", "Candidato Ganador"])
-    
+    ws2.append(["Candidato", "Total Votos"])
     for col in range(1, 3):
-        cell = ws2.cell(row=row + 1, column=col)
-        cell.fill = encabezado_fill
-        cell.font = encabezado_font
-        cell.alignment = encabezado_align
+        cell = ws2.cell(row=row+1, column=col)
+        cell.fill = PatternFill(start_color="008000", end_color="008000", fill_type="solid")
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
         cell.border = thin_border
 
+    candidatos_count = {}
+    for voto in votos:
+        candidato = voto['nombre_candidato']
+        candidatos_count[candidato] = candidatos_count.get(candidato, 0) + 1
+
     row += 2
-    for jornada, candidato in ganadores.items():
-        ws2.append([jornada, candidato])
-        ws2.cell(row=row, column=1).border = thin_border
-        ws2.cell(row=row, column=2).border = thin_border
+    for candidato, total in candidatos_count.items():
+        ws2.append([candidato, total])
+        for col in range(1, 3):
+            cell = ws2.cell(row=row, column=col)
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal="center", vertical="center")
         row += 1
 
-    # Ajustar ancho de columnas
+    # ==== Ajustar anchos ====
     for col in range(1, 3):
-        ws2.column_dimensions[get_column_letter(col)].width = 15
+        ws2.column_dimensions[get_column_letter(col)].width = 20
 
-    # Crear gráfico de barras
+    # ==== Gráfico de Barras ====
     chart = BarChart()
     chart.type = "col"
     chart.title = "Votos por Jornada"
     chart.y_axis.title = "Votos"
     chart.x_axis.title = "Jornada"
 
-    # Referencias a las categorías (Jornadas) y datos (Total de votos)
-    categories = Reference(ws2, min_col=1, min_row=2, max_row=5)
-
-    # Colores personalizados (uno para cada jornada)
-    colors = ["FF5733", "C70039", "28B463", "8E44AD"] 
-
-    # Agregar cada jornada como una serie independiente
-    for i in range(2, 3):  # Solo una columna de datos (total votos)
-        data = Reference(ws2, min_col=i, min_row=1, max_row=5)
-        series = Series(data, title_from_data=True)  # Usa el nombre de la jornada como título
-        series.graphicalProperties.solidFill = colors[i - 2]  # Asigna un color diferente
+    # Cada jornada como barra con su color
+    col = 2  # columna "Total Votos"
+    for i, (jornada, total) in enumerate(jornadas.items(), start=2):
+        data = Reference(ws2, min_col=col, min_row=i, max_row=i)  # solo esa fila
+        series = Series(data, title=ws2.cell(row=i, column=1).value)  # título = nombre jornada
+        series.graphicalProperties.solidFill = list(colores_jornadas.values())[i-2]  # color por jornada
         series.data_labels = DataLabelList()
-        series.data_labels.showVal = True  # Mostrar valores en las barras
+        series.data_labels.showVal = True
         chart.append(series)
 
-    # Asignar categorías
+    # Categorías (Mañana, Tarde, etc.)
+    categories = Reference(ws2, min_col=1, min_row=2, max_row=5)
     chart.set_categories(categories)
 
-    # Agregar leyenda correctamente
-    chart.legend = Legend()
-    chart.legend.position = "b"  # "t" (arriba), "b" (abajo), "l" (izquierda), "r" (derecha)
-
-    # Agregar el gráfico a la hoja "Resumen"
     ws2.add_chart(chart, "E2")
 
-    # Guardar archivo y enviarlo al usuario
+    # -------------------- Guardar y enviar --------------------
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
@@ -529,8 +536,14 @@ def buscar_votante():
 
     if usuario:
         if usuario['asistencia_voto'] == 0:
-            # Asignar un número de mesa aleatorio entre 1 y 30
-            mesa_asignada = random.randint(1, 10)
+            # Lista global de asignaciones mezcladas
+            if 'cola_mesas' not in session or not session['cola_mesas']:
+                mesas = list(range(1, 11))  # [1..10]
+                random.shuffle(mesas)
+                session['cola_mesas'] = mesas
+
+            # Sacar el siguiente computador de la cola
+            mesa_asignada = session['cola_mesas'].pop(0)
 
             # Actualizar asistencia, ficha y número de mesa
             cursor.execute("""
@@ -571,32 +584,100 @@ def buscar_votante():
 def crear_candidato():
     try:
         if request.method == 'POST':
-            # Obtener datos del formulario
             nombre_candidato = request.form['nombre_candidato']
             jornada = request.form['jornada']
             foto_candidato = request.files['foto_candidato']
             
-            # Leer la foto como binario
             foto_binario = foto_candidato.read()
-    
-            # Guardar los datos en la base de datos
+
             cursor = mysql.connection.cursor()
-            sql = """
-            INSERT INTO candidatos (nombre_candidato, foto, jornada) 
-            VALUES (%s, %s, %s)
-            """
+            sql = "INSERT INTO candidatos (nombre_candidato, foto, jornada) VALUES (%s, %s, %s)"
             values = (nombre_candidato, foto_binario, jornada)
             cursor.execute(sql, values)
             mysql.connection.commit()
-            
-            # Confirmación de éxito
+
             flash('¡Candidato creado exitosamente!', 'success')
             return redirect(url_for('crear_candidato'))
     except Exception as e:
-        # print(f"Error al crear candidato: {e}")
         flash('Hubo un error al crear el candidato. Inténtalo de nuevo.', 'error')
-    
-    return render_template('crear_candidato.html')
+
+    # 🔹 Aquí cargamos la lista de candidatos agrupados por nombre
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT 
+            MIN(idcandidato) AS idcandidato, 
+            nombre_candidato, 
+            GROUP_CONCAT(jornada ORDER BY jornada SEPARATOR ', ') AS jornadas
+        FROM candidatos
+        GROUP BY nombre_candidato
+    """)
+    candidatos = cursor.fetchall()
+
+    return render_template('crear_candidato.html', candidatos=candidatos)
+
+# --- LISTAR CANDIDATOS ---
+@app.route("/candidatos")
+def candidatos():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT 
+            MIN(idcandidato) AS idcandidato, 
+            nombre_candidato, 
+            GROUP_CONCAT(jornada ORDER BY jornada SEPARATOR ', ') AS jornadas
+        FROM candidatos
+        GROUP BY nombre_candidato
+    """)
+    lista = cursor.fetchall()
+    return render_template("crear_candidato.html", candidatos=lista)
+
+
+# --- MOSTRAR FOTO ---
+@app.route("/foto_candidato/<int:idcandidato>")
+def foto_candidato(idcandidato):
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT foto FROM candidatos WHERE idcandidato = %s", (idcandidato,))
+    row = cursor.fetchone()
+    if row and row[0]:
+        return Response(row[0], mimetype="image/jpeg")
+    return "Sin foto", 404
+
+# --- EDITAR CANDIDATO ---
+@app.route("/editar_candidato/<int:idcandidato>", methods=["GET", "POST"])
+def editar_candidato(idcandidato):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == "POST":
+        nombre = request.form["nombre_candidato"]
+        jornada = request.form["jornada"]
+
+        if "foto_candidato" in request.files and request.files["foto_candidato"].filename != "":
+            foto = request.files["foto_candidato"].read()
+            cursor.execute(
+                "UPDATE candidatos SET nombre_candidato=%s, jornada=%s, foto=%s WHERE idcandidato=%s",
+                (nombre, jornada, foto, idcandidato),
+            )
+        else:
+            cursor.execute(
+                "UPDATE candidatos SET nombre_candidato=%s, jornada=%s WHERE idcandidato=%s",
+                (nombre, jornada, idcandidato),
+            )
+
+        mysql.connection.commit()
+        flash("Candidato actualizado correctamente", "success")
+        return redirect(url_for("candidatos"))
+
+    cursor.execute("SELECT * FROM candidatos WHERE idcandidato = %s", (idcandidato,))
+    candidato = cursor.fetchone()
+    return render_template("editar_candidato.html", candidato=candidato)
+
+# --- ELIMINAR CANDIDATO ---
+@app.route("/eliminar_candidato/<int:idcandidato>")
+def eliminar_candidato(idcandidato):
+    cursor = mysql.connection.cursor()
+    cursor.execute("DELETE FROM candidatos WHERE idcandidato = %s", (idcandidato,))
+    mysql.connection.commit()
+    flash("Candidato eliminado correctamente", "success")
+    return redirect(url_for("candidatos"))
 
 @app.route('/resultados', methods=['GET'])
 @no_cache
