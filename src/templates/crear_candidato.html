@@ -35,7 +35,7 @@
 
     <script>
         function mostrarNotificacion(event) {
-            event.preventDefault(); // Evita envío inmediato
+            event.preventDefault(); 
 
             Swal.fire({
                 title: '¡Candidato añadido!',
@@ -46,7 +46,6 @@
                 timerProgressBar: true
             });
 
-            // Esperar 2s y enviar el formulario
             setTimeout(() => {
                 event.target.submit();
             }, 2000);

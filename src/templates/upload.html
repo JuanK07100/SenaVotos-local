@@ -7,7 +7,6 @@
     <title>Cargar Archivo de Fichas</title>
     <link rel="icon" href="{{ url_for('static', filename='img/senavotos_logo.png') }}" type="image/png">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
-    <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
@@ -34,7 +33,6 @@
         </div>
     </div>
 
-    <!-- Validación del archivo con SweetAlert -->
     <script>
         document.getElementById("fileUpload").addEventListener("change", function (event) {
             const file = event.target.files[0];

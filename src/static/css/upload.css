@@ -5,9 +5,7 @@
     font-weight: 500;
 }
 
-/* Estilos generales */
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     display: flex;
@@ -19,7 +17,6 @@ body {
     background-size: cover;
 }
 
-/* Contenedor principal */
 .padre {
     display: flex;  
     justify-content: center;
@@ -43,7 +40,6 @@ body {
     overflow: hidden;
 }
 
-/* Título principal */
 .container h1 {
     color: #28a745;
     font-size: 1.8rem;
@@ -52,7 +48,6 @@ body {
     margin-bottom: 1.5rem;
 }
 
-/* Estilo de los botones */
 .container button {
     background-color: #28a745;
     color: white;
@@ -80,7 +75,6 @@ body {
     flex-direction: column;
 }
 
-/* Input de carga */
 .cargar input {
     border: none;
     color: white;

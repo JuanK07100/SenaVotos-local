@@ -12,7 +12,6 @@
 </head>
 
 <body onload="iniciarTemporizador()">
-    <!-- Encabezado de la página -->
     <header>
         <h1 class="titulo">Elección de Candidatos</h1>
     </header>
@@ -21,7 +20,6 @@
         <span id="minutos">1</span>:<span id="segundos">10</span>
     </div>
 
-    <!-- Sección principal -->
     <main>
         <div class="contenedor">
             {% if mensaje %}
@@ -50,7 +48,6 @@
         </div>
     </main>
 
-    <!-- Modal de confirmación -->
     <div id="modal-confirmacion" class="modal oculto">
         <div class="modal-contenido">
             <h2>¿Estás seguro?</h2>
@@ -64,7 +61,6 @@
         </div>
     </div>
 
-    <!-- Enlace a JavaScript -->
     <script src="{{ url_for('static', filename='js/eleccion.js') }}"></script>
 </body>
 

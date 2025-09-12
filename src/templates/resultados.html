@@ -11,13 +11,11 @@
 </head>
 
 <body>
-    <!-- Botón para regresar al índice (ubicado en la parte superior izquierda) -->
     <a href="{{ url_for('home') }}" class="btn btn-secondary">Volver al Inicio</a>
 
     <h1>Resultados</h1>
     <div class="contenedor">
 
-        <!-- Contenedor para las gráficas -->
         <div id="graficasContainer">
             {% for jornada, resultados in resultados.items() %}
             <div class="grafica">
@@ -29,7 +27,6 @@
     </div>
 
     <script>
-        // Variables globales para almacenar las gráficas
         let graficas = {};
     
         function crearOActualizarGraficas(resultados) {
@@ -40,17 +37,15 @@
     
                 const ctx = document.getElementById(`grafica${jornada}`).getContext('2d');
     
-                // Si la gráfica ya existe, actualiza los datos
                 if (graficas[jornada]) {
                     graficas[jornada].data.labels = nombres;
                     graficas[jornada].data.datasets[0].data = votos;
-                    graficas[jornada].update(); // Actualizar gráfico
+                    graficas[jornada].update();
                 } else {
-                    // Crear nueva gráfica
                     graficas[jornada] = new Chart(ctx, {
                         type: 'bar',
                         data: {
-                            labels: nombres, // Etiquetas
+                            labels: nombres, 
                             datasets: [{
                                 label: 'Total de Votos',
                                 data: votos,
@@ -91,10 +86,8 @@
                 .catch(error => console.error('Error al obtener los resultados:', error));
         }
     
-        // Llamar a la función cada 5 segundos
         setInterval(actualizarResultados, 5000);
     
-        // Cargar las gráficas cuando se abre la página
         actualizarResultados();
     </script>    
 </body>

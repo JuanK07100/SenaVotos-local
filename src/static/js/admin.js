@@ -14,7 +14,7 @@ function actualizarVotos() {
             });
             jornadaSelect.val(jornadaActual); // Restaurar selección
 
-            // 🔄 Actualizar filtro de candidato
+            // Actualizar filtro de candidato
             const candidatoSelect = $("#filtro-candidato");
             const candidatoActual = candidatoSelect.val();
             candidatoSelect.empty().append(`<option value="">Todos</option>`);
@@ -23,7 +23,7 @@ function actualizarVotos() {
             });
             candidatoSelect.val(candidatoActual); // Restaurar selección
 
-            // ✅ Reaplicar los filtros activos
+            // Reaplicar los filtros activos
             aplicarFiltros();
 
             $("#form-exportar").on("submit", function (e) {

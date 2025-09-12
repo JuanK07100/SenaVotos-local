@@ -258,7 +258,7 @@ def actualizar_votos():
         "html": html_filas,
         "jornadas": jornadas,
         "candidatos": candidatos,
-        "total": len(votos)  # 🧮 Total de votos
+        "total": len(votos)  # Total de votos
     })
 
 @app.route('/admin/exportar_excel', methods=['POST'])
@@ -296,7 +296,7 @@ def exportar_excel():
 
     wb = Workbook()
 
-    # 🔹 Hoja "Votos" (Manteniendo Estilos)
+    # Hoja "Votos" (Manteniendo Estilos)
     ws = wb.active
     ws.title = "Votos"
 
@@ -327,7 +327,7 @@ def exportar_excel():
     for col in range(1, 6):
         ws.column_dimensions[get_column_letter(col)].width = 20
 
-    # 🔹 Hoja "Resumen" con Mejoras
+    # Hoja "Resumen" con Mejoras
     ws2 = wb.create_sheet("Resumen")
 
     encabezado_fill = PatternFill(start_color="008000", end_color="008000", fill_type="solid")
@@ -391,7 +391,7 @@ def exportar_excel():
     categories = Reference(ws2, min_col=1, min_row=2, max_row=5)
 
     # Colores personalizados (uno para cada jornada)
-    colors = ["FF5733", "C70039", "28B463", "8E44AD"]  # Rojo, vino, verde, morado
+    colors = ["FF5733", "C70039", "28B463", "8E44AD"] 
 
     # Agregar cada jornada como una serie independiente
     for i in range(2, 3):  # Solo una columna de datos (total votos)
@@ -467,7 +467,7 @@ def procesar_fichas():
             mysql.connection.commit()
         except pymysql.err.IntegrityError as e:
             if e.args[0] == 1062:
-                flash(f"⚠️ La ficha con ID {id_ficha} ya existe en el sistema.", "danger")
+                flash(f"La ficha con ID {id_ficha} ya existe en el sistema.", "danger")
                 return redirect(url_for('upload'))
             else:
                 raise
@@ -495,10 +495,10 @@ def procesar_fichas():
                 )
         mysql.connection.commit()
 
-        flash("✅ Datos de la ficha y aprendices guardados correctamente.", "success")
+        flash("Datos de la ficha y aprendices guardados correctamente.", "success")
 
     except Exception as e:
-        flash("❌ Error al procesar el archivo. Verifica que el formato sea correcto.", "danger")
+        flash("Error al procesar el archivo. Verifica que el formato sea correcto.", "danger")
         print("[ERROR]", str(e))  # Para ti como desarrollador
 
     return redirect(url_for('upload'))
@@ -530,7 +530,7 @@ def buscar_votante():
     if usuario:
         if usuario['asistencia_voto'] == 0:
             # Asignar un número de mesa aleatorio entre 1 y 30
-            mesa_asignada = random.randint(1, 30)
+            mesa_asignada = random.randint(1, 10)
 
             # Actualizar asistencia, ficha y número de mesa
             cursor.execute("""
