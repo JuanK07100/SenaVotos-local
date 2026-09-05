@@ -14,7 +14,7 @@
     <div class="container">
         <div class="header">
             <h1>Gestión de Candidatos</h1>
-            <a href="{{ url_for('admin') }}">Volver</a>
+            <a href="{{ url_for('admin.admin') }}">Volver</a>
         </div>
 
         <!-- Tabla de candidatos -->
@@ -31,14 +31,14 @@
                 <tbody>
                     {% for candidato in candidatos %}
                     <tr>
-                        <td><img src="{{ url_for('foto_candidato', idcandidato=candidato.idcandidato) }}" alt="Foto"
+                        <td><img src="{{ url_for('candidatos.foto_candidato', idcandidato=candidato.idcandidato) }}" alt="Foto"
                                 width="60"></td>
                         <td>{{ candidato.nombre_candidato }}</td>
                         <td>{{ candidato.jornadas }}</td>
                         <td>
-                            <a href="{{ url_for('editar_candidato', idcandidato=candidato.idcandidato) }}"
+                            <a href="{{ url_for('candidatos.editar_candidato', idcandidato=candidato.idcandidato) }}"
                                 class="btn editar">Editar</a>
-                            <a href="{{ url_for('eliminar_candidato', idcandidato=candidato.idcandidato) }}"
+                            <a href="{{ url_for('candidatos.eliminar_candidato', idcandidato=candidato.idcandidato) }}"
                                 class="btn eliminar" onclick="return confirmarEliminar(event)">Eliminar</a>
                         </td>
                     </tr>
@@ -56,8 +56,7 @@
         <!-- Formulario flotante tipo modal -->
         <div id="formulario-modal" class="modal">
             <h2>Nuevo Candidato</h2>
-            <form action="{{ url_for('crear_candidato') }}" method="POST" enctype="multipart/form-data"
-                onsubmit="mostrarNotificacion(event)">
+            <form action="{{ url_for('candidatos.crear_candidato') }}" method="POST" enctype="multipart/form-data" onsubmit="mostrarNotificacion(event)">
                 <label for="nombre_candidato">Nombre del Candidato:</label>
                 <input type="text" id="nombre_candidato" name="nombre_candidato" required>
 

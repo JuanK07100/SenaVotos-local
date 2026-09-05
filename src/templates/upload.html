@@ -14,7 +14,7 @@
     <div class="padre">
         <div class="container">
             <h1>Cargar Ficha</h1>
-            <form method="POST" action="{{ url_for('procesar_fichas') }}" enctype="multipart/form-data" class="mt-4">
+            <form method="POST" action="{{ url_for('fichas.procesar_fichas') }}" enctype="multipart/form-data" class="mt-4">
                 <div class="cargar">
                     <input type="file" id="fileUpload" name="file" class="form-control mt-3" required>
 
@@ -30,7 +30,7 @@
                 </div>
             </form>
 
-            <a href="{{ url_for('admin') }}" class="btn btn-secondary mt-4">Volver al Panel</a>
+            <a href="{{ url_for('admin.admin') }}" class="btn btn-secondary mt-4">Volver al Panel</a>
         </div>
     </div>
 

@@ -32,8 +32,7 @@
                     <img src="data:image/jpeg;base64,{{ candidato['foto'] }}"
                         alt="Foto de {{ candidato['nombre_candidato'] }}" class="foto-candidato">
                     <h3 class="nombre-candidato">{{ candidato['nombre_candidato'] }}</h3>
-                    <form method="POST" action="/eleccion" class="form-eleccion"
-                        onsubmit="return mostrarConfirmacion(event, '{{ candidato['nombre_candidato'] }}', this)">
+                    <form method="POST" action="{{ url_for('eleccion.eleccion') }}" class="form-eleccion"onsubmit="return mostrarConfirmacion(event, '{{ candidato['nombre_candidato'] }}', this)">
                         <input type="hidden" name="candidato_id" value="{{ candidato['idcandidato'] }}">
                         <button type="submit" class="elegir-btn"
                             aria-label="Elegir a {{ candidato['nombre_candidato'] }}">Elegir</button>

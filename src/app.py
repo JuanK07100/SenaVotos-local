@@ -1,6 +1,6 @@
 from flask import Flask
 from config import Config
-from extensions import mysql
+from extensions import db
 from utils.helpers import base64_encode
 
 # Importar blueprints
@@ -12,17 +12,20 @@ from blueprints.candidatos import bp as candidatos_bp
 from blueprints.resultados import bp as resultados_bp
 from blueprints.fichas import bp as fichas_bp
 
+# Importar modelos para que SQLAlchemy los conozca
+from models import Ficha, Usuario, Candidato, Voto
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Inicializar extensiones
-    mysql.init_app(app)
+    db.init_app(app)
 
-    # Registrar filtro
+    with app.app_context():
+        db.create_all()
+
     app.add_template_filter(base64_encode, 'b64encode')
 
-    # Registrar blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(eleccion_bp)
     app.register_blueprint(admin_bp)

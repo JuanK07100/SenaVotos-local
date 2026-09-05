@@ -8,14 +8,14 @@
 <body>
     <div class="container">
         <h1>Editar Candidato</h1>
-        <form action="{{ url_for('editar_candidato', idcandidato=candidato.idcandidato) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ url_for('candidatos.editar_candidato', idcandidato=candidato.idcandidato) }}" method="POST" enctype="multipart/form-data">
             <label for  ="nombre_candidato">Nombre del Candidato:</label>
             <input type="text" id="nombre_candidato" name="nombre_candidato" value="{{ candidato.nombre_candidato }}" required>
 
             <label for="foto_candidato">Foto del Candidato:</label>
             <input type="file" id="foto_candidato" name="foto_candidato" accept="image/*">
             <p>Foto actual:</p>
-            <img src="{{ url_for('foto_candidato', idcandidato=candidato.idcandidato) }}" alt="Foto actual" width="100">
+            <img src="{{ url_for('candidatos.foto_candidato', idcandidato=candidato.idcandidato) }}" alt="Foto actual" width="100">
 
             <label for="jornada">Jornada:</label>
             <select id="jornada" name="jornada">
@@ -27,7 +27,7 @@
 
             <button type="submit">Actualizar</button>
         </form>
-        <a href="{{ url_for('candidatos') }}">Volver</a>
+        <a href="{{ url_for('candidatos.listar_candidatos') }}">Volver</a>
     </div>
 </body>
 </html>

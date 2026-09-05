@@ -68,14 +68,14 @@
         {% endif %}
 
         <div class="btn-container">
-            <a href="{{ url_for('home') }}" class="btn btn-back">Volver al Inicio</a>
-            <form id="form-exportar" method="POST" action="{{ url_for('exportar_excel') }}">
+            <a href="{{ url_for('auth.home') }}" class="btn btn-back">Volver al Inicio</a>
+            <form id="form-exportar" method="POST" action="{{ url_for('admin.exportar_excel') }}">
                 <input type="hidden" name="jornada" id="filtro-jornada-hidden">
                 <input type="hidden" name="candidato" id="filtro-candidato-hidden">
                 <button type="submit" class="btn btn-export">Descargar Lista</button>
             </form>
-            <a href="{{ url_for('upload') }}" class="btn btn-export">Cargar Ficha</a>
-            <a href="{{ url_for('crear_candidato') }}" class="btn btn-export">Candidatos</a>
+            <a href="{{ url_for('fichas.upload') }}" class="btn btn-export">Cargar Ficha</a>
+            <a href="{{ url_for('candidatos.crear_candidato') }}" class="btn btn-export">Candidatos</a>
         </div>
     </main>
 

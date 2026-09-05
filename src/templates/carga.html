@@ -1,4 +1,3 @@
-<!-- templates/carga.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -15,10 +14,10 @@
 
     <script>
         const rutas = {
-            admin: "{{ url_for('admin') }}",
-            recepcionista: "{{ url_for('recepcionista') }}",
-            resultados: "{{ url_for('resultados') }}",
-            eleccion: "{{ url_for('eleccion') }}"
+            admin: "{{ url_for('admin.admin') }}",
+            recepcionista: "{{ url_for('recepcionista.recepcionista') }}",
+            resultados: "{{ url_for('resultados.resultados') }}",
+            eleccion: "{{ url_for('eleccion.eleccion') }}"
         };
 
         const destino = "{{ destino }}";
